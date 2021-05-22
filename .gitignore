@@ -19,3 +19,6 @@ _test
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Ignore binary for this project
+lenslocked.com
