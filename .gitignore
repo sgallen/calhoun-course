@@ -10,6 +10,7 @@
 # Folders
 _obj
 _test
+tmp
 
 # Test binary, built with `go test -c`
 *.test
@@ -22,3 +23,6 @@ _test
 
 # Ignore binary for this project
 lenslocked.com
+
+# Swp files
+*.swp
