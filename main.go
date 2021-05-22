@@ -8,7 +8,7 @@ import (
 )
 
 func prepareHeader(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Type", "text/html")
 }
 
 func homeHandleFunc(w http.ResponseWriter, r *http.Request) {
@@ -25,9 +25,16 @@ func contactHandleFunc(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+func notFoundHandleFunc(w http.ResponseWriter, r *http.Request) {
+	prepareHeader(w)
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprint(w, "<h1>Not Found</h1>")
+}
+
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", homeHandleFunc)
 	r.HandleFunc("/contact", contactHandleFunc)
+	r.NotFoundHandler = http.HandlerFunc(notFoundHandleFunc)
 	http.ListenAndServe(":3000", r)
 }
