@@ -18,6 +18,7 @@ func handlerFunc(w http.ResponseWriter, r *http.Request) {
 			<a href="mailto:foo@example.com">me</a>`,
 		)
 	default:
+		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "404")
 	}
 }
