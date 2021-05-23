@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var homeTemplate *template.Template
+var homeTemplate, contactTemplate *template.Template
 
 func prepareHeader(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "text/html")
@@ -23,11 +23,9 @@ func homeHandleFunc(w http.ResponseWriter, r *http.Request) {
 
 func contactHandleFunc(w http.ResponseWriter, r *http.Request) {
 	prepareHeader(w)
-	fmt.Fprint(
-		w,
-		`To get in touch, please send an email to
-		<a href="mailto:foo@example.com">me</a>`,
-	)
+	if err := contactTemplate.Execute(w, nil); err != nil {
+		panic(err)
+	}
 }
 
 func notFoundHandleFunc(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +37,10 @@ func notFoundHandleFunc(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var err error
 	homeTemplate, err = template.ParseFiles("views/home.gohtml")
+	if err != nil {
+		panic(err)
+	}
+	contactTemplate, err = template.ParseFiles("views/contact.gohtml")
 	if err != nil {
 		panic(err)
 	}
