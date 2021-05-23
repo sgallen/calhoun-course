@@ -2,12 +2,17 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"lenslocked.com/views"
 
 	"github.com/gorilla/mux"
 )
+
+func init() {
+	log.SetPrefix("MAIN: ")
+}
 
 var (
 	homeView    *views.View
@@ -20,7 +25,8 @@ func prepareHeader(w http.ResponseWriter) {
 
 func homeHandleFunc(w http.ResponseWriter, r *http.Request) {
 	prepareHeader(w)
-	err := homeView.Template.ExecuteTemplate(w, homeView.Layout, nil)
+	log.Printf("Route: %v", homeView.Data.Route)
+	err := homeView.Template.ExecuteTemplate(w, homeView.Layout, homeView.Data)
 	if err != nil {
 		panic(err)
 	}
@@ -28,7 +34,8 @@ func homeHandleFunc(w http.ResponseWriter, r *http.Request) {
 
 func contactHandleFunc(w http.ResponseWriter, r *http.Request) {
 	prepareHeader(w)
-	err := contactView.Template.ExecuteTemplate(w, contactView.Layout, nil)
+	log.Printf("Route: %v", contactView.Data.Route)
+	err := contactView.Template.ExecuteTemplate(w, contactView.Layout, contactView.Data)
 	if err != nil {
 		panic(err)
 	}
@@ -41,8 +48,8 @@ func notFoundHandleFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	homeView = views.NewView("bootstrap", "views/home.gohtml")
-	contactView = views.NewView("bootstrap", "views/contact.gohtml")
+	homeView = views.NewView("bootstrap", "home", "views/home.gohtml")
+	contactView = views.NewView("bootstrap", "contact", "views/contact.gohtml")
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", homeHandleFunc)
