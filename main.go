@@ -26,19 +26,13 @@ func prepareHeader(w http.ResponseWriter) {
 func homeHandleFunc(w http.ResponseWriter, r *http.Request) {
 	prepareHeader(w)
 	log.Printf("Route: %v", homeView.Data.Route)
-	err := homeView.Template.ExecuteTemplate(w, homeView.Layout, homeView.Data)
-	if err != nil {
-		panic(err)
-	}
+	must(homeView.Render(w))
 }
 
 func contactHandleFunc(w http.ResponseWriter, r *http.Request) {
 	prepareHeader(w)
 	log.Printf("Route: %v", contactView.Data.Route)
-	err := contactView.Template.ExecuteTemplate(w, contactView.Layout, contactView.Data)
-	if err != nil {
-		panic(err)
-	}
+	must(contactView.Render(w))
 }
 
 func notFoundHandleFunc(w http.ResponseWriter, r *http.Request) {
@@ -56,4 +50,10 @@ func main() {
 	r.HandleFunc("/contact", contactHandleFunc)
 	r.NotFoundHandler = http.HandlerFunc(notFoundHandleFunc)
 	http.ListenAndServe(":3000", r)
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
