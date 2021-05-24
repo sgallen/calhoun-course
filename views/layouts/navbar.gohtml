@@ -28,6 +28,18 @@
               Contact
           </a>
         </div>
+        <div class="navbar-nav ms-auto">
+          <a
+            {{if eq .Route "signup"}}
+            class="nav-link active"
+            aria-current="page"
+            {{else}}
+            class="nav-link"
+            {{end}}
+            href="/signup">
+              Sign Up
+          </a>
+        </div>
       </div>
     </div>
   </nav>

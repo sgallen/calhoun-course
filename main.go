@@ -17,6 +17,7 @@ func init() {
 var (
 	homeView    *views.View
 	contactView *views.View
+	signupView  *views.View
 )
 
 func prepareHeader(w http.ResponseWriter) {
@@ -35,6 +36,12 @@ func contactHandleFunc(w http.ResponseWriter, r *http.Request) {
 	must(contactView.Render(w))
 }
 
+func signupHandleFunc(w http.ResponseWriter, r *http.Request) {
+	prepareHeader(w)
+	log.Printf("Route: %v", signupView.Data.Route)
+	must(signupView.Render(w))
+}
+
 func notFoundHandleFunc(w http.ResponseWriter, r *http.Request) {
 	prepareHeader(w)
 	w.WriteHeader(http.StatusNotFound)
@@ -44,10 +51,12 @@ func notFoundHandleFunc(w http.ResponseWriter, r *http.Request) {
 func main() {
 	homeView = views.NewView("bootstrap", "home", "views/home.gohtml")
 	contactView = views.NewView("bootstrap", "contact", "views/contact.gohtml")
+	signupView = views.NewView("bootstrap", "signup", "views/signup.gohtml")
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", homeHandleFunc)
 	r.HandleFunc("/contact", contactHandleFunc)
+	r.HandleFunc("/signup", signupHandleFunc)
 	r.NotFoundHandler = http.HandlerFunc(notFoundHandleFunc)
 	http.ListenAndServe(":3000", r)
 }
