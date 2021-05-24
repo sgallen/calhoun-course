@@ -18,7 +18,6 @@ func init() {
 var (
 	homeView    *views.View
 	contactView *views.View
-	signupView  *views.View
 )
 
 func prepareHeader(w http.ResponseWriter) {
@@ -35,12 +34,6 @@ func contactHandleFunc(w http.ResponseWriter, r *http.Request) {
 	prepareHeader(w)
 	log.Printf("Route: %v", contactView.Data.Route)
 	must(contactView.Render(w))
-}
-
-func signupHandleFunc(w http.ResponseWriter, r *http.Request) {
-	prepareHeader(w)
-	log.Printf("Route: %v", signupView.Data.Route)
-	must(signupView.Render(w))
 }
 
 func notFoundHandleFunc(w http.ResponseWriter, r *http.Request) {
