@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/schema"
 	"lenslocked.com/views"
 )
 
@@ -24,6 +25,11 @@ func NewUsers() *Users {
 
 type Users struct {
 	View *views.View
+}
+
+type SignUpForm struct {
+	Email    string `schema:"email"`
+	Password string `schema:"password"`
 }
 
 // New is used to render the form where a user can create
@@ -49,5 +55,16 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 //
 // POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "This is a temp response.")
+	if err := r.ParseForm(); err != nil {
+		panic(err)
+	}
+
+	d := schema.NewDecoder()
+	var form SignUpForm
+
+	if err := d.Decode(&form, r.PostForm); err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintf(w, "SignUpForm struct: %v", form)
 }
