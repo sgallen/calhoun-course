@@ -1,0 +1,20 @@
+version: '3.3'
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: usegolang_dev
+      POSTGRES_USER: foo
+      POSTGRES_PASSWORD: foo
+    ports:
+        - '5432:5432'
+    logging:
+      options:
+        max-size: '1m'
+        max-file: '3'
+    volumes:
+        - postgres-data:/var/lib/postgresql/data/
+
+volumes:
+    postgres-data:
