@@ -36,6 +36,13 @@ type View struct {
 	Data     Data
 }
 
+func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	if err := v.Render(w); err != nil {
+		panic(err)
+	}
+}
+
 func (v *View) Render(w http.ResponseWriter) error {
 	return v.Template.ExecuteTemplate(w, v.Layout, v.Data)
 }
