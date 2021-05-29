@@ -17,7 +17,7 @@ func NewUsers() *Users {
 		View: views.NewView(
 			"bootstrap",
 			"signup",
-			"views/users/new.gohtml",
+			"users/new",
 		),
 	}
 }
