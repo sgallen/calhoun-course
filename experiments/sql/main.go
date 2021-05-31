@@ -19,6 +19,12 @@ const (
 	dbname   = "usegolang_dev"
 )
 
+type User struct {
+	Id    int
+	Name  string
+	Email string
+}
+
 func main() {
 	psqlInfo := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -26,7 +32,8 @@ func main() {
 	)
 	pingDatabase(psqlInfo)
 	runTestQuery(psqlInfo)
-	runInsertQuery(psqlInfo)
+	insertUserQuery(psqlInfo)
+	selectUsersQuery(psqlInfo)
 }
 
 func pingDatabase(connString string) {
@@ -64,7 +71,7 @@ func runTestQuery(connString string) {
 	fmt.Println(greeting)
 }
 
-func runInsertQuery(connString string) {
+func insertUserQuery(connString string) {
 	conn, err := pgx.Connect(context.Background(), connString)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
@@ -86,4 +93,39 @@ func runInsertQuery(connString string) {
 	}
 
 	fmt.Println("Inserted user and their id is:", userId)
+}
+
+func selectUsersQuery(connString string) {
+	conn, err := pgx.Connect(context.Background(), connString)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	defer conn.Close(context.Background())
+
+	rows, err := conn.Query(
+		context.Background(),
+		"SELECT id, name, email FROM users;",
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to select data: %v\n", err)
+		os.Exit(1)
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var u User
+		err = rows.Scan(&u.Id, &u.Name, &u.Email)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to scan rows: %v\n", err)
+			os.Exit(1)
+		}
+		users = append(users, u)
+	}
+	if err = rows.Err(); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Users:", users)
 }
