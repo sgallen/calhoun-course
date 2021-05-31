@@ -1,0 +1,9 @@
+<h1>Hello, {{.Name}}. You are {{.Age}} years old</h1>
+<p>You have a {{.Dog.Breed}} and I see its name is {{.Dog.Name}}</p>
+{{if .Dog.FavoriteToys}}
+<ul>
+    {{range $element := .Dog.FavoriteToys}}
+    <li>{{$element}}</li>{{end}}
+</ul>
+{{end}}
+
