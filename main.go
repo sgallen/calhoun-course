@@ -6,8 +6,17 @@ import (
 	"net/http"
 
 	"lenslocked.com/controllers"
+	"lenslocked.com/models"
 
 	"github.com/gorilla/mux"
+)
+
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "foo"
+	password = "foo"
+	dbname   = "usegolang_dev"
 )
 
 func init() {
@@ -20,6 +29,24 @@ func notFoundHandleFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	psqlInfo := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname,
+	)
+
+	us, err := models.NewUserService(psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+	defer us.Close()
+
+	// us.DestructiveReset()
+	user, err := us.ById(1)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(user)
+
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers()
 
