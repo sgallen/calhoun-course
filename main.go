@@ -51,11 +51,22 @@ func main() {
 		panic(err)
 	}
 
-	// user, err := us.ById(1)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	fmt.Println(user)
+	userById, err := us.ById(1)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(userById)
+
+	err = us.Delete(2)
+	if err != nil {
+		panic(err)
+	}
+
+	userByEmail, err := us.ByEmail("mike@dunder.com")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(userByEmail)
 
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers()
