@@ -3,10 +3,13 @@ package models
 import (
 	"errors"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	_ "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+const userPasswordPepper = "ajDYmXelRfAC06G3oEjjXT2/+BucicO4"
 
 var (
 	ErrNotFound = errors.New("models: resource not found")
@@ -23,9 +26,10 @@ func NewUserService(connInfo string) (*UserService, error) {
 
 type User struct {
 	gorm.Model
-	Name     string
-	Email    string `gorm:"not null;uniqueIndex"`
-	Password string
+	Name         string
+	Email        string `gorm:"not null;uniqueIndex"`
+	Password     string `gorm:"-"`
+	PasswordHash string `gorm:"not null"`
 }
 
 type UserService struct {
@@ -55,6 +59,18 @@ func first(tx *gorm.DB, user *User) error {
 }
 
 func (us *UserService) Create(user *User) error {
+	passwordBytes := []byte(user.Password + userPasswordPepper)
+	hashedBytes, err := bcrypt.GenerateFromPassword(
+		passwordBytes,
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = string(hashedBytes)
+	user.Password = ""
+
 	return us.db.Create(user).Error
 }
 
