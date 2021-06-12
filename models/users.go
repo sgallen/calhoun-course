@@ -23,8 +23,9 @@ func NewUserService(connInfo string) (*UserService, error) {
 
 type User struct {
 	gorm.Model
-	Name  string
-	Email string `gorm:"not null;uniqueIndex"`
+	Name     string
+	Email    string `gorm:"not null;uniqueIndex"`
+	Password string
 }
 
 type UserService struct {
@@ -78,7 +79,13 @@ func (us *UserService) Close() error {
 	return sqlDB.Close()
 }
 
-func (us *UserService) DestructiveReset() {
-	us.db.Migrator().DropTable(&User{})
-	us.db.AutoMigrate(&User{})
+func (us *UserService) DestructiveReset() error {
+	if err := us.db.Migrator().DropTable(&User{}); err != nil {
+		return err
+	}
+	return us.AutoMigrate()
+}
+
+func (us *UserService) AutoMigrate() error {
+	return us.db.AutoMigrate(&User{})
 }

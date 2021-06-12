@@ -29,47 +29,18 @@ func notFoundHandleFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	psqlInfo := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname,
 	)
-
 	us, err := models.NewUserService(psqlInfo)
-	if err != nil {
-		panic(err)
-	}
 	defer us.Close()
-
-	us.DestructiveReset()
-
-	user := models.User{
-		Name:  "Michael Scott",
-		Email: "mike@dunder.com",
-	}
-
-	if err = us.Create(&user); err != nil {
-		panic(err)
-	}
-
-	userById, err := us.ById(1)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(userById)
-
-	err = us.Delete(2)
-	if err != nil {
-		panic(err)
-	}
-
-	userByEmail, err := us.ByEmail("mike@dunder.com")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(userByEmail)
+	us.AutoMigrate()
 
 	staticC := controllers.NewStatic()
-	usersC := controllers.NewUsers()
+	usersC := controllers.NewUsers(us)
 
 	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")

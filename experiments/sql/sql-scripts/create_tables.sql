@@ -1,7 +1,11 @@
+DROP TABLE users;
+DROP TABLE orders;
+
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name TEXT,
-    email TEXT NOT NULL
+    email TEXT NOT NULL,
+    password TEXT
 );
 
 CREATE TABLE orders (
