@@ -12,7 +12,9 @@ import (
 const userPasswordPepper = "ajDYmXelRfAC06G3oEjjXT2/+BucicO4"
 
 var (
-	ErrNotFound = errors.New("models: resource not found")
+	ErrNotFound          = errors.New("models: resource not found")
+	ErrIncorrectPassword = errors.New("models: incorrect password")
+	ErrInvalidPassword   = errors.New("models: invalid password")
 )
 
 func NewUserService(connInfo string) (*UserService, error) {
@@ -58,10 +60,25 @@ func first(tx *gorm.DB, user *User) error {
 	return err
 }
 
+func pepperPassword(password string) []byte {
+	return []byte(password + userPasswordPepper)
+}
+
+func validatePassword(password string) error {
+	if len(password) >= 10 {
+		return nil
+	}
+	return ErrInvalidPassword
+}
+
 func (us *UserService) Create(user *User) error {
-	passwordBytes := []byte(user.Password + userPasswordPepper)
+	err := validatePassword(user.Password)
+	if err != nil {
+		return err
+	}
+
 	hashedBytes, err := bcrypt.GenerateFromPassword(
-		passwordBytes,
+		pepperPassword(user.Password),
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
@@ -72,6 +89,29 @@ func (us *UserService) Create(user *User) error {
 	user.Password = ""
 
 	return us.db.Create(user).Error
+}
+
+func (us *UserService) Authenticate(email string, password string) (*User, error) {
+	user, err := us.ByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(user.PasswordHash),
+		pepperPassword(password),
+	)
+
+	if err != nil {
+		switch err {
+		case bcrypt.ErrMismatchedHashAndPassword:
+			return nil, ErrIncorrectPassword
+		default:
+			return nil, err
+		}
+	}
+
+	return user, nil
 }
 
 func (us *UserService) Update(user *User) error {

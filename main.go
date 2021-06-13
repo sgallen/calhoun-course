@@ -47,6 +47,8 @@ func main() {
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.HandleFunc("/signup", usersC.New).Methods("GET")
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
+	r.HandleFunc("/login", usersC.Login).Methods("GET")
+	r.HandleFunc("/login", usersC.Auth).Methods("POST")
 	r.NotFoundHandler = http.HandlerFunc(notFoundHandleFunc)
 	http.ListenAndServe(":3000", r)
 }

@@ -13,24 +13,35 @@ import (
 // This function will panic if the templates are not
 // parsed correctly, and should only be used during
 // initial setup.
-func NewUsers(us *models.UserService) *Users {
-	return &Users{
+func NewUsers(us *models.UserService) *UserController {
+	return &UserController{
 		View: views.NewView(
 			"bootstrap",
 			"signup",
 			"users/new",
 		),
+		LoginView: views.NewView(
+			"bootstrap",
+			"login",
+			"users/auth",
+		),
 		userService: us,
 	}
 }
 
-type Users struct {
+type UserController struct {
 	View        *views.View
+	LoginView   *views.View
 	userService *models.UserService
 }
 
 type SignUpForm struct {
 	Name     string `schema:"name"`
+	Email    string `schema:"email"`
+	Password string `schema:"password"`
+}
+
+type LoginForm struct {
 	Email    string `schema:"email"`
 	Password string `schema:"password"`
 }
@@ -47,9 +58,9 @@ type SignUpForm struct {
 // GET /users - fetch all users
 // POST /users - create a user
 // GET /users/<id> fetch a user
-func (u *Users) New(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Route: %v", u.View.Data.Route)
-	if err := u.View.Render(w); err != nil {
+func (uc *UserController) New(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Route: %v", uc.View.Data.Route)
+	if err := uc.View.Render(w); err != nil {
 		panic(err)
 	}
 }
@@ -57,7 +68,7 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 // Create is used to process the signup form.
 //
 // POST /signup
-func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+func (uc *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	var form SignUpForm
 	if err := parseForm(r, &form); err != nil {
 		panic(err)
@@ -68,10 +79,43 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		Email:    form.Email,
 		Password: form.Password,
 	}
-	if err := u.userService.Create(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := uc.userService.Create(&user); err != nil {
+		switch err {
+		case models.ErrInvalidPassword:
+			fmt.Fprintln(w, "Invalid password")
+		case nil:
+			fmt.Fprintf(w, "SignUpForm struct: %v", form)
+			fmt.Fprintf(w, "Created user: %v", user)
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func (uc *UserController) Login(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Route: %v", uc.View.Data.Route)
+	if err := uc.LoginView.Render(w); err != nil {
+		panic(err)
+	}
+}
+
+func (uc *UserController) Auth(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Route: %v", uc.View.Data.Route)
+	var form LoginForm
+	if err := parseForm(r, &form); err != nil {
+		panic(err)
 	}
 
-	fmt.Fprintf(w, "SignUpForm struct: %v", form)
-	fmt.Fprintf(w, "Created user: %v", user)
+	user, err := uc.userService.Authenticate(form.Email, form.Password)
+	switch err {
+	case models.ErrNotFound:
+		fmt.Fprintln(w, "Invalid email address")
+		return
+	case models.ErrIncorrectPassword:
+		fmt.Fprintln(w, "Incorrect password")
+	case nil:
+		fmt.Fprintln(w, user)
+	default:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

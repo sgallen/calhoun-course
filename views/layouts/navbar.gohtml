@@ -39,6 +39,16 @@
             href="/signup">
               Sign Up
           </a>
+          <a
+            {{if eq .Route "login"}}
+            class="nav-link active"
+            aria-current="page"
+            {{else}}
+            class="nav-link"
+            {{end}}
+            href="/login">
+              Login
+          </a>
         </div>
       </div>
     </div>
