@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"lenslocked.com/controllers"
+	"lenslocked.com/hash"
 	"lenslocked.com/models"
 
 	"github.com/gorilla/mux"
@@ -46,6 +47,9 @@ func main() {
 
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(us)
+
+	hmac := hash.NewHMAC("my-secret-key")
+	fmt.Println(hmac.Hash("foo"))
 
 	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")
