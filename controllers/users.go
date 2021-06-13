@@ -15,7 +15,7 @@ import (
 // initial setup.
 func NewUsers(us *models.UserService) *UserController {
 	return &UserController{
-		View: views.NewView(
+		SignUpView: views.NewView(
 			"bootstrap",
 			"signup",
 			"users/new",
@@ -30,7 +30,7 @@ func NewUsers(us *models.UserService) *UserController {
 }
 
 type UserController struct {
-	View        *views.View
+	SignUpView  *views.View
 	LoginView   *views.View
 	userService *models.UserService
 }
@@ -46,29 +46,11 @@ type LoginForm struct {
 	Password string `schema:"password"`
 }
 
-// New is used to render the form where a user can create
-// a new user account.
-//
-// GET /signup
-//
-// TODO:
-// I don't like the design Calhoun is using here. Would prefer
-// the signup page to be a template that's focused on rendering
-// an HTML page and then have standard REST endpoints:
-// GET /users - fetch all users
-// POST /users - create a user
-// GET /users/<id> fetch a user
-func (uc *UserController) New(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Route: %v", uc.View.Data.Route)
-	if err := uc.View.Render(w); err != nil {
-		panic(err)
-	}
-}
-
 // Create is used to process the signup form.
 //
 // POST /signup
 func (uc *UserController) Create(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Route: %v", uc.SignUpView.Data.Route)
 	var form SignUpForm
 	if err := parseForm(r, &form); err != nil {
 		panic(err)
@@ -89,17 +71,13 @@ func (uc *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-}
 
-func (uc *UserController) Login(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Route: %v", uc.View.Data.Route)
-	if err := uc.LoginView.Render(w); err != nil {
-		panic(err)
-	}
+	signIn(w, &user)
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
 func (uc *UserController) Auth(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Route: %v", uc.View.Data.Route)
+	log.Printf("Route: %v", uc.LoginView.Data.Route)
 	var form LoginForm
 	if err := parseForm(r, &form); err != nil {
 		panic(err)
@@ -118,11 +96,12 @@ func (uc *UserController) Auth(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	createCookie(w, user)
-	fmt.Fprintln(w, user)
+
+	signIn(w, user)
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
-func createCookie(w http.ResponseWriter, user *models.User) {
+func signIn(w http.ResponseWriter, user *models.User) {
 	cookie := http.Cookie{
 		Name:  "email",
 		Value: user.Email,
