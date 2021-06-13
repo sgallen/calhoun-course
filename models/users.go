@@ -7,9 +7,12 @@ import (
 	"gorm.io/driver/postgres"
 	_ "gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"lenslocked.com/hash"
+	"lenslocked.com/rand"
 )
 
 const userPasswordPepper = "ajDYmXelRfAC06G3oEjjXT2/+BucicO4"
+const secretKey = "dPVstQi1BUGMr8Q0jYU9iO9n9VRIgoGe"
 
 var (
 	ErrNotFound          = errors.New("models: resource not found")
@@ -23,7 +26,7 @@ func NewUserService(connInfo string) (*UserService, error) {
 		return nil, err
 	}
 
-	return &UserService{db: db}, nil
+	return &UserService{db: db, hmac: hash.NewHMAC(secretKey)}, nil
 }
 
 type User struct {
@@ -32,10 +35,13 @@ type User struct {
 	Email        string `gorm:"not null;uniqueIndex"`
 	Password     string `gorm:"-"`
 	PasswordHash string `gorm:"not null"`
+	Remember     string `gorm:"-"`
+	RememberHash string `gorm:"not null;uniqueIndex"`
 }
 
 type UserService struct {
-	db *gorm.DB
+	db   *gorm.DB
+	hmac *hash.HMAC
 }
 
 func (us *UserService) ById(id uint) (*User, error) {
@@ -48,6 +54,14 @@ func (us *UserService) ById(id uint) (*User, error) {
 func (us *UserService) ByEmail(email string) (*User, error) {
 	var user User
 	tx := us.db.Where("email = ?", email)
+	err := first(tx, &user)
+	return &user, err
+}
+
+func (us *UserService) ByRemember(remember string) (*User, error) {
+	rememberHash := us.hmac.Hash(remember)
+	var user User
+	tx := us.db.Where("remember_hash = ?", rememberHash)
 	err := first(tx, &user)
 	return &user, err
 }
@@ -88,6 +102,15 @@ func (us *UserService) Create(user *User) error {
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
 
+	if user.Remember == "" {
+		remember, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = remember
+	}
+	user.RememberHash = us.hmac.Hash(user.Remember)
+
 	return us.db.Create(user).Error
 }
 
@@ -115,6 +138,9 @@ func (us *UserService) Authenticate(email string, password string) (*User, error
 }
 
 func (us *UserService) Update(user *User) error {
+	if user.Remember != "" {
+		user.RememberHash = us.hmac.Hash(user.Remember)
+	}
 	return us.db.Save(user).Error
 }
 

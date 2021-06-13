@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"lenslocked.com/models"
+	"lenslocked.com/rand"
 	"lenslocked.com/views"
 )
 
@@ -72,7 +73,12 @@ func (uc *UserController) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	signIn(w, &user)
+	err = uc.signIn(w, &user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
@@ -97,14 +103,34 @@ func (uc *UserController) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	signIn(w, user)
+	err = uc.signIn(w, user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
-func signIn(w http.ResponseWriter, user *models.User) {
+func (uc *UserController) signIn(w http.ResponseWriter, user *models.User) error {
+	if user.Remember == "" {
+		remember, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = remember
+
+		err = uc.userService.Update(user)
+		if err != nil {
+			return err
+		}
+	}
+
 	cookie := http.Cookie{
-		Name:  "email",
-		Value: user.Email,
+		Name:  "remember_token",
+		Value: user.Remember,
 	}
 	http.SetCookie(w, &cookie)
+
+	return nil
 }
