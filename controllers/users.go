@@ -79,16 +79,15 @@ func (uc *UserController) Create(w http.ResponseWriter, r *http.Request) {
 		Email:    form.Email,
 		Password: form.Password,
 	}
-	if err := uc.userService.Create(&user); err != nil {
-		switch err {
-		case models.ErrInvalidPassword:
-			fmt.Fprintln(w, "Invalid password")
-		case nil:
-			fmt.Fprintf(w, "SignUpForm struct: %v", form)
-			fmt.Fprintf(w, "Created user: %v", user)
-		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+	err := uc.userService.Create(&user)
+	switch err {
+	case models.ErrInvalidPassword:
+		fmt.Fprintln(w, "Invalid password")
+	case nil:
+		fmt.Fprintf(w, "SignUpForm struct: %v", form)
+		fmt.Fprintf(w, "Created user: %v", user)
+	default:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -107,15 +106,26 @@ func (uc *UserController) Auth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := uc.userService.Authenticate(form.Email, form.Password)
-	switch err {
-	case models.ErrNotFound:
-		fmt.Fprintln(w, "Invalid email address")
+	if err != nil {
+		switch err {
+		case models.ErrNotFound:
+			fmt.Fprintln(w, "Invalid email address")
+			return
+		case models.ErrIncorrectPassword:
+			fmt.Fprintln(w, "Incorrect password")
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
-	case models.ErrIncorrectPassword:
-		fmt.Fprintln(w, "Incorrect password")
-	case nil:
-		fmt.Fprintln(w, user)
-	default:
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	createCookie(w, user)
+	fmt.Fprintln(w, user)
+}
+
+func createCookie(w http.ResponseWriter, user *models.User) {
+	cookie := http.Cookie{
+		Name:  "email",
+		Value: user.Email,
+	}
+	http.SetCookie(w, &cookie)
 }
